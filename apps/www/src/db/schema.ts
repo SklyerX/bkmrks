@@ -1,3 +1,4 @@
+import { varchar } from "drizzle-orm/pg-core";
 import {
   boolean,
   timestamp,
@@ -7,6 +8,8 @@ import {
   integer,
 } from "drizzle-orm/pg-core";
 import type { AdapterAccountType } from "next-auth/adapters";
+import { createId } from "@paralleldrive/cuid2";
+import { relations } from "drizzle-orm";
 
 export const users = pgTable("user", {
   id: text("id")
@@ -84,3 +87,55 @@ export const authenticators = pgTable(
     }),
   })
 );
+
+// REST OF DB
+
+type FolderReference = { id: string };
+
+export const folders = pgTable("folders", {
+  id: varchar("id", { length: 24 })
+    .primaryKey()
+    .$defaultFn(() => createId()),
+  name: varchar("name", { length: 50 }).notNull(),
+  // ! LEAVE UNTIL END
+  order: integer("order").notNull(), // For drag-and-drop reordering
+  // ! LEAVE UNTIL END
+  emoji: varchar("emoji", { length: 50 }).notNull(),
+  parentId: varchar("parent_id", { length: 24 }).references(
+    (): FolderReference => folders.id
+  ),
+});
+
+export const bookmarks = pgTable("bookmarks", {
+  id: varchar("id", { length: 24 })
+    .primaryKey()
+    .$defaultFn(() => createId()),
+  name: varchar("name", { length: 50 }).notNull(),
+  url: varchar("url", { length: 500 }).notNull(),
+  description: varchar("description", { length: 500 }),
+  favicon: text("favicon"),
+  // ! LEAVE UNTIL END
+  order: integer("order").notNull(),
+  // ! LEAVE UNTIL END
+  folderId: varchar("folder_id", { length: 24 }).references(() => folders.id, {
+    onDelete: "cascade",
+  }),
+  isStarred: boolean("is_starred").notNull().default(false),
+});
+
+// Define relations for better type safety and querying
+export const foldersRelations = relations(folders, ({ one, many }) => ({
+  parent: one(folders, {
+    fields: [folders.parentId],
+    references: [folders.id],
+  }),
+  children: many(folders),
+  bookmarks: many(bookmarks),
+}));
+
+export const bookmarksRelations = relations(bookmarks, ({ one }) => ({
+  folder: one(folders, {
+    fields: [bookmarks.folderId],
+    references: [folders.id],
+  }),
+}));
