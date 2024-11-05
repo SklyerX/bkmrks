@@ -1,16 +1,16 @@
-# docker-compose.yml (in root directory)
+# docker-compose.yml
 version: '3.8'
 
 services:
   postgres:
-    container_name: ${PROJECT_NAME:-myapp}_postgres
+    container_name: ${PROJECT_NAME:-bkmrks}_postgres
     image: postgres:15
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "${POSTGRES_PORT:-5433}:5432"
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_DB: ${POSTGRES_DB:-myapp}
+      POSTGRES_DB: ${POSTGRES_DB:-bkmrks-app}  # Changed from myapp to bkmrks-app
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -18,25 +18,6 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-
-  www:
-    container_name: ${PROJECT_NAME:-myapp}_www
-    build:
-      context: .
-      dockerfile: apps/www/Dockerfile
-      target: development
-    ports:
-      - "${WWW_PORT:-3000}:3000"
-    volumes:
-      - .:/app
-      - /app/node_modules
-      - /app/.next
-    environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-myapp}
-      NODE_ENV: development
-    depends_on:
-      postgres:
-        condition: service_healthy
 
 volumes:
   postgres_data:

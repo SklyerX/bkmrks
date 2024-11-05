@@ -8,6 +8,7 @@ declare global {
   var db: PostgresJsDatabase<typeof schema> | undefined;
 }
 
+let db: PostgresJsDatabase<typeof schema>;
 let pg: ReturnType<typeof postgres>;
 
 if (process.env.NODE_ENV === "production") {
