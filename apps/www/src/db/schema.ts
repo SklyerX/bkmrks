@@ -88,21 +88,17 @@ export const authenticators = pgTable(
   })
 );
 
-// REST OF DB
-
 type FolderReference = { id: string };
 
-export const folders = pgTable("folders", {
+export const sections = pgTable("sections", {
   id: varchar("id", { length: 24 })
     .primaryKey()
     .$defaultFn(() => createId()),
   name: varchar("name", { length: 50 }).notNull(),
-  // ! LEAVE UNTIL END
-  order: integer("order").notNull(), // For drag-and-drop reordering
-  // ! LEAVE UNTIL END
+  order: integer("order").notNull(),
   emoji: varchar("emoji", { length: 50 }).notNull(),
   parentId: varchar("parent_id", { length: 24 }).references(
-    (): FolderReference => folders.id
+    (): FolderReference => sections.id
   ),
 });
 
@@ -114,28 +110,29 @@ export const bookmarks = pgTable("bookmarks", {
   url: varchar("url", { length: 500 }).notNull(),
   description: varchar("description", { length: 500 }),
   favicon: text("favicon"),
-  // ! LEAVE UNTIL END
   order: integer("order").notNull(),
-  // ! LEAVE UNTIL END
-  folderId: varchar("folder_id", { length: 24 }).references(() => folders.id, {
+  folderId: varchar("folder_id", { length: 24 }).references(() => sections.id, {
     onDelete: "cascade",
   }),
   isStarred: boolean("is_starred").notNull().default(false),
 });
 
-// Define relations for better type safety and querying
-export const foldersRelations = relations(folders, ({ one, many }) => ({
-  parent: one(folders, {
-    fields: [folders.parentId],
-    references: [folders.id],
+// Combine all section relations into a single declaration with named relations
+export const sectionRelations = relations(sections, ({ one, many }) => ({
+  parent: one(sections, {
+    fields: [sections.parentId],
+    references: [sections.id],
+    relationName: "parentChild",
   }),
-  children: many(folders),
+  children: many(sections, {
+    relationName: "parentChild",
+  }),
   bookmarks: many(bookmarks),
 }));
 
-export const bookmarksRelations = relations(bookmarks, ({ one }) => ({
-  folder: one(folders, {
+export const bookmarkRelations = relations(bookmarks, ({ one }) => ({
+  folder: one(sections, {
     fields: [bookmarks.folderId],
-    references: [folders.id],
+    references: [sections.id],
   }),
 }));
