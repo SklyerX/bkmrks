@@ -94,6 +94,9 @@ export const sections = pgTable("sections", {
   id: varchar("id", { length: 24 })
     .primaryKey()
     .$defaultFn(() => createId()),
+  userId: text("user_id").references(() => users.id, {
+    onDelete: "cascade",
+  }),
   name: varchar("name", { length: 50 }).notNull(),
   order: integer("order").notNull(),
   emoji: varchar("emoji", { length: 50 }).notNull(),
@@ -108,6 +111,9 @@ export const bookmarks = pgTable("bookmarks", {
     .$defaultFn(() => createId()),
   name: varchar("name", { length: 50 }).notNull(),
   url: varchar("url", { length: 500 }).notNull(),
+  userId: text("user_id").references(() => users.id, {
+    onDelete: "cascade",
+  }),
   description: varchar("description", { length: 500 }),
   favicon: text("favicon"),
   order: integer("order").notNull(),
@@ -136,3 +142,7 @@ export const bookmarkRelations = relations(bookmarks, ({ one }) => ({
     references: [sections.id],
   }),
 }));
+
+// Types
+
+export const SelectBookmark = bookmarks.$inferSelect;

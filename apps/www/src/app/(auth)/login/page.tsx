@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { signIn } from "next-auth/react";
 import { useState } from "react";
-import { Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function Page() {
@@ -70,10 +69,7 @@ export default function Page() {
                   disabled={isLoading}
                 />
               </motion.div>
-              <Button disabled={isLoading}>
-                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Sign In with Email
-              </Button>
+              <Button disabled={isLoading}>Sign In with Email</Button>
             </motion.div>
           </form>
           <motion.div
