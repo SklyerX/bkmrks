@@ -1,9 +1,18 @@
 import { auth } from "@/auth";
-import Sidebar from "@/components/sidebar";
 import { redirect } from "next/navigation";
 import type React from "react";
 import { db } from "@/db";
-import Link from "next/link";
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/app-sidebar";
+import { cookies } from "next/headers";
+import { CommandMenu } from "@/components/command-menu";
+import AddBookmarkModal from "./_components/add-bookmark-modal";
+import { Toaster } from "@/components/ui/sonner";
+import EditBookmarkModal from "./_components/edit-bookmark-modal";
 
 export default async function DashboardLayout({
   children,
@@ -14,17 +23,33 @@ export default async function DashboardLayout({
 
   if (!session || !session?.user) return redirect("/login");
 
+  const favorites = await db.query.bookmarks.findMany({
+    where: (fields, { eq, and, isNull }) =>
+      and(
+        eq(fields.isStarred, true),
+        eq(fields.userId, session?.user?.id as string)
+      ),
+    limit: 15,
+  });
+
+  const cookieStore = await cookies();
+  const defaultOpen = cookieStore.get("sidebar:state")?.value === "true";
+
   return (
     <main className="min-h-screen bg-background">
-      {/* Global Header */}
-      <header className="h-16 border-b flex items-center px-4">
-        <div className="container max-w-3xl mx-auto flex justify-between items-center">
-          <h1 className="font-semibold">Bookmarks</h1>
-          <div>user dropdown</div>
-        </div>
-      </header>
-
-      {children}
+      <SidebarProvider defaultOpen={defaultOpen}>
+        <AppSidebar favorites={favorites} user={session.user} />
+        <SidebarInset>
+          <header className="flex sticky top-0 bg-background h-16 shrink-0 items-center gap-2 px-4">
+            <SidebarTrigger className="-ml-1" />
+          </header>
+          <div className="flex flex-1 flex-col gap-4 p-4">{children}</div>
+        </SidebarInset>
+      </SidebarProvider>
+      <CommandMenu />
+      <AddBookmarkModal />
+      <EditBookmarkModal />
+      <Toaster />
     </main>
   );
 }

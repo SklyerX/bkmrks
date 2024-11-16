@@ -1,5 +1,7 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import axios from "axios";
+import type { UrlMetadata } from "./types";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -24,3 +26,24 @@ export function formatBytes(
       : (sizes[i] ?? "Bytes")
   }`;
 }
+
+export const extractUrlMetadata = async (url: string): Promise<UrlMetadata> => {
+  const { data: html } = await axios.get(url);
+
+  const titleMatch = html.match(/<title>(.*?)<\/title>/);
+  const descriptionMatch = html.match(
+    /<meta name="description" content="(.*?)"/
+  );
+  const imageMatch = html.match(/<meta property="og:image" content="(.*?)"/);
+
+  const title = titleMatch ? titleMatch[1] : "";
+  const description = descriptionMatch ? descriptionMatch[1] : "";
+  const imageURL = imageMatch ? imageMatch[1] : "";
+
+  return {
+    title,
+    description,
+    favicon: imageURL,
+    url,
+  };
+};
