@@ -1,8 +1,11 @@
-import { Input } from "@/components/ui/input";
-import { useDebounce } from "@/hooks/use-debounce";
-import { Loader2 } from "lucide-react";
+import {
+  BookmarkEntrySchema,
+  BookmarkEntryWithId,
+  type BookmarkEntry,
+} from "@/lib/validators/add-bookmark";
 import { useEffect, useState } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Form,
   FormControl,
@@ -12,30 +15,33 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { useForm } from "react-hook-form";
-import {
-  type BookmarkEntry,
-  BookmarkEntrySchema,
-} from "@/lib/validators/add-bookmark";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useDebounce } from "@/hooks/use-debounce";
+import { z } from "zod";
+import { useParams } from "next/navigation";
 import axios from "axios";
+import { Loader2 } from "lucide-react";
 import { useAction } from "next-safe-action/hooks";
 import { addBookmarkAction } from "../_actions/add-bookmark";
+import { updateBookmarkAction } from "../_actions/update-bookmark";
 import { toast } from "sonner";
-import { z } from "zod";
 
 interface Props {
+  bookmark?: BookmarkEntryWithId;
   onCompleted: () => void;
 }
 
-export default function BookmarkForm(props: Props) {
+export default function BookmarkForm({ bookmark, onCompleted }: Props) {
   const [loading, setLoading] = useState<boolean>(false);
   const { sectionId } = useParams();
 
-  const { execute, status, result } = useAction(addBookmarkAction);
+  const isEditMode = !!bookmark;
+
+  const addBookmark = useAction(addBookmarkAction);
+  const updateBookmark = useAction(updateBookmarkAction);
 
   const debounceFetch = useDebounce(async (value: string) => {
     if (z.string().url().safeParse(value).success === false) return;
@@ -51,28 +57,157 @@ export default function BookmarkForm(props: Props) {
     setLoading(false);
   }, 500);
 
+  const getDefaultValues = () => ({
+    name: bookmark?.name || "",
+    url: bookmark?.url || "",
+    description: bookmark?.description || "",
+    favicon: bookmark?.favicon || "",
+    folderId: Array.isArray(sectionId) ? sectionId[0] : sectionId || "",
+    isStarred: bookmark?.isStarred || false,
+  });
+
   const form = useForm<BookmarkEntry>({
     resolver: zodResolver(BookmarkEntrySchema),
-    defaultValues: {
-      folderId: Array.isArray(sectionId) ? sectionId[0] : sectionId || "",
-    },
+    defaultValues: getDefaultValues(),
   });
 
   const handleSubmit = (data: BookmarkEntry) => {
-    execute(data);
+    if (isEditMode) {
+      updateBookmark.execute({
+        ...data,
+        id: bookmark.id,
+      });
+
+      return;
+    }
+
+    addBookmark.execute(data);
   };
 
   useEffect(() => {
-    if (status === "hasSucceeded") {
-      toast.success("Bookmark added successfully");
-      props.onCompleted();
+    if (addBookmark.status === "hasSucceeded") {
+      toast.success("Bookmark created successfully");
+      onCompleted();
     }
-    if (status === "hasErrored") {
-      toast.error("Failed to add bookmark", {
-        description: result.serverError || "Something went wrong!",
+    if (addBookmark.status === "hasErrored") {
+      toast.error("Failed to create bookmark", {
+        description: addBookmark.result.serverError || "Something went wrong!",
       });
     }
-  }, [status, result]);
+  }, [addBookmark.status, addBookmark.result, onCompleted]);
+
+  useEffect(() => {
+    if (updateBookmark.status === "hasSucceeded") {
+      toast.success("Bookmark updated successfully");
+      onCompleted();
+    }
+    if (updateBookmark.status === "hasErrored") {
+      toast.error("Failed to update bookmark", {
+        description:
+          updateBookmark.result.serverError || "Something went wrong!",
+      });
+    }
+  }, [updateBookmark.status, updateBookmark.result, onCompleted]);
+
+  const renderForm = () => (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(handleSubmit)}>
+        <div className="flex items-center gap-2">
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem className="w-full">
+                <FormLabel />
+                <FormControl>
+                  <Input placeholder="Name" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="description"
+            render={({ field }) => (
+              <FormItem className="w-full">
+                <FormLabel />
+                <FormControl>
+                  <Input placeholder="Description" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        <FormField
+          control={form.control}
+          name="url"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel />
+              <FormControl>
+                <Input placeholder="https://" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="favicon"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel />
+              <FormControl>
+                <Input
+                  placeholder="https://example.com/favicon.ico"
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="isStarred"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-start space-x-3 space-y-0 mt-3">
+              <FormControl>
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+              <div className="space-y-1 leading-none">
+                <FormLabel>Star</FormLabel>
+                <FormDescription>
+                  Save this bookmark to your starred bookmarks
+                </FormDescription>
+              </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <Button
+          type="submit"
+          className="mt-5"
+          disabled={
+            isEditMode
+              ? updateBookmark.status === "executing"
+              : addBookmark.status === "executing"
+          }
+        >
+          {isEditMode ? "Update" : "Create"} Bookmark
+        </Button>
+      </form>
+    </Form>
+  );
+
+  if (isEditMode) {
+    return renderForm();
+  }
 
   return (
     <div>
@@ -112,104 +247,14 @@ export default function BookmarkForm(props: Props) {
             </div>
           </div>
           <Button
-            onClick={() => execute(form.getValues())}
-            disabled={loading}
+            onClick={() => addBookmark.execute(form.getValues())}
+            disabled={loading || addBookmark.status === "executing"}
             className="mt-5"
           >
             Create Bookmark
           </Button>
         </TabsContent>
-        <TabsContent value="manual">
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)}>
-              <div className="flex items-center gap-2">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem className="w-full">
-                      <FormLabel />
-                      <FormControl>
-                        <Input placeholder="Name" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem className="w-full">
-                      <FormLabel />
-                      <FormControl>
-                        <Input placeholder="Description" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <FormField
-                control={form.control}
-                name="url"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel />
-                    <FormControl>
-                      <Input placeholder="https://" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="favicon"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel />
-                    <FormControl>
-                      <Input
-                        placeholder="https://example.com/favicon.ico"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="isStarred"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 mt-3">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel>Star</FormLabel>
-                      <FormDescription>
-                        Save this bookmark to your starred bookmarks
-                      </FormDescription>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <Button
-                type="submit"
-                className="mt-5"
-                disabled={status === "executing"}
-              >
-                Create Bookmark
-              </Button>
-            </form>
-          </Form>
-        </TabsContent>
+        <TabsContent value="manual">{renderForm()}</TabsContent>
       </Tabs>
     </div>
   );

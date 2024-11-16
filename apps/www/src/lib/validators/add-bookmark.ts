@@ -16,3 +16,4 @@ export const BookmarkEntrySchema = z.object({
 
 export type Bookmark = z.infer<typeof BookmarkSchema>;
 export type BookmarkEntry = z.infer<typeof BookmarkEntrySchema>;
+export type BookmarkEntryWithId = BookmarkEntry & { id: string };

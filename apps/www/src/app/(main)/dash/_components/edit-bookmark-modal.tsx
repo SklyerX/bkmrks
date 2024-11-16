@@ -7,8 +7,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useEditBookmark } from "@/states/edit-bookmark";
-import React from "react";
 import BookmarkForm from "./bookmark-form";
+import type { BookmarkEntryWithId } from "@/lib/validators/add-bookmark";
 
 export default function EditBookmarkModal() {
   const { open, closeDialog, bookmark } = useEditBookmark();
@@ -19,7 +19,10 @@ export default function EditBookmarkModal() {
         <DialogHeader>
           <DialogTitle>Edit Bookmark</DialogTitle>
         </DialogHeader>
-        {/* TODO: add bookmark edit form and update bookmark edit form */}
+        <BookmarkForm
+          bookmark={bookmark as BookmarkEntryWithId}
+          onCompleted={closeDialog}
+        />
       </DialogContent>
     </Dialog>
   );
