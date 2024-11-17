@@ -1,26 +1,28 @@
 // ADD COMMAND K PLUS SHORTCUTS TO EXECUTE ACTIONS
 
 import { auth } from "@/auth";
-import { Button } from "@/components/ui/button";
 import { db } from "@/db";
 import { Folder } from "lucide-react";
 import Link from "next/link";
 import AddBookmark from "./_components/add-bookmark";
 import BookmarkCard from "./_components/bookmark-card";
+import { and, desc, eq, isNull } from "drizzle-orm";
+import { bookmarks as bookmarksTable } from "@/db/schema";
 
 export default async function Page() {
   const session = await auth();
 
   const [bookmarks, sections] = await Promise.all([
-    db.query.bookmarks.findMany({
-      where: (fields, { eq, and, isNull }) =>
+    await db
+      .select()
+      .from(bookmarksTable)
+      .where(
         and(
-          isNull(fields.folderId),
-          eq(fields.userId, session?.user?.id as string),
-          eq(fields.isStarred, true)
-        ),
-      orderBy: (fields, { desc }) => desc(fields.id),
-    }),
+          isNull(bookmarksTable.folderId),
+          eq(bookmarksTable.userId, session?.user?.id as string)
+        )
+      )
+      .orderBy(desc(bookmarksTable.createdAt)),
     db.query.sections.findMany({
       where: (fields, { eq, and, isNull }) =>
         and(

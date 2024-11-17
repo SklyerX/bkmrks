@@ -103,13 +103,14 @@ export const sections = pgTable("sections", {
   parentId: varchar("parent_id", { length: 24 }).references(
     (): FolderReference => sections.id
   ),
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
 });
 
 export const bookmarks = pgTable("bookmarks", {
   id: varchar("id", { length: 24 })
     .primaryKey()
     .$defaultFn(() => createId()),
-  name: varchar("name", { length: 50 }).notNull(),
+  name: varchar("name", { length: 150 }).notNull(),
   url: varchar("url", { length: 500 }).notNull(),
   userId: text("user_id").references(() => users.id, {
     onDelete: "cascade",
@@ -121,6 +122,7 @@ export const bookmarks = pgTable("bookmarks", {
     onDelete: "cascade",
   }),
   isStarred: boolean("is_starred").notNull().default(false),
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
 });
 
 // Combine all section relations into a single declaration with named relations

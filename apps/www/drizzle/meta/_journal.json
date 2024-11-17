@@ -15,6 +15,27 @@
       "when": 1731081326152,
       "tag": "0001_neat_cannonball",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1731811071522,
+      "tag": "0002_calm_radioactive_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1731811104371,
+      "tag": "0003_next_lady_deathstrike",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1731811144503,
+      "tag": "0004_productive_wilson_fisk",
+      "breakpoints": true
     }
   ]
 }

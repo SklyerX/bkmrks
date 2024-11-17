@@ -1,6 +1,6 @@
 import {
   BookmarkEntrySchema,
-  BookmarkEntryWithId,
+  type BookmarkEntryWithId,
   type BookmarkEntry,
 } from "@/lib/validators/add-bookmark";
 import { useEffect, useState } from "react";
@@ -89,17 +89,17 @@ export default function BookmarkForm({ bookmark, onCompleted }: Props) {
       toast.success("Bookmark created successfully");
       onCompleted();
     }
+    if (updateBookmark.status === "hasSucceeded") {
+      toast.success("Bookmark updated successfully");
+      onCompleted();
+    }
+  }, [addBookmark.status, updateBookmark.status]);
+
+  useEffect(() => {
     if (addBookmark.status === "hasErrored") {
       toast.error("Failed to create bookmark", {
         description: addBookmark.result.serverError || "Something went wrong!",
       });
-    }
-  }, [addBookmark.status, addBookmark.result, onCompleted]);
-
-  useEffect(() => {
-    if (updateBookmark.status === "hasSucceeded") {
-      toast.success("Bookmark updated successfully");
-      onCompleted();
     }
     if (updateBookmark.status === "hasErrored") {
       toast.error("Failed to update bookmark", {
@@ -107,7 +107,12 @@ export default function BookmarkForm({ bookmark, onCompleted }: Props) {
           updateBookmark.result.serverError || "Something went wrong!",
       });
     }
-  }, [updateBookmark.status, updateBookmark.result, onCompleted]);
+  }, [
+    addBookmark.status,
+    addBookmark.result,
+    updateBookmark.status,
+    updateBookmark.result,
+  ]);
 
   const renderForm = () => (
     <Form {...form}>
@@ -234,9 +239,9 @@ export default function BookmarkForm({ bookmark, onCompleted }: Props) {
           </div>
           <div className="flex flex-row items-start mt-4 space-x-2">
             <Checkbox
-              checked={form.getValues("isStarred")}
-              onCheckedChange={(value) =>
-                form.setValue("isStarred", value as boolean)
+              checked={form.watch("isStarred")}
+              onCheckedChange={(checked) =>
+                form.setValue("isStarred", checked as boolean)
               }
             />
             <div className="space-y-1 leading-none flex flex-col">
@@ -247,7 +252,8 @@ export default function BookmarkForm({ bookmark, onCompleted }: Props) {
             </div>
           </div>
           <Button
-            onClick={() => addBookmark.execute(form.getValues())}
+            type="button"
+            onClick={form.handleSubmit((data) => addBookmark.execute(data))}
             disabled={loading || addBookmark.status === "executing"}
             className="mt-5"
           >
