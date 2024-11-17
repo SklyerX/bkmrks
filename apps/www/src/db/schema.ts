@@ -99,7 +99,10 @@ export const sections = pgTable("sections", {
   }),
   name: varchar("name", { length: 50 }).notNull(),
   parentId: varchar("parent_id", { length: 24 }).references(
-    (): FolderReference => sections.id
+    (): FolderReference => sections.id,
+    {
+      onDelete: "cascade",
+    }
   ),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
 });

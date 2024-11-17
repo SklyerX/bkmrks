@@ -4,9 +4,22 @@ import { db } from "./db";
 
 import Resend from "next-auth/providers/resend";
 import Google from "next-auth/providers/google";
+import {
+  accounts,
+  authenticators,
+  sessions,
+  users,
+  verificationTokens,
+} from "./db/schema";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  adapter: DrizzleAdapter(db),
+  adapter: DrizzleAdapter(db, {
+    accountsTable: accounts,
+    usersTable: users,
+    authenticatorsTable: authenticators,
+    sessionsTable: sessions,
+    verificationTokensTable: verificationTokens,
+  }),
   providers: [
     Google,
     Resend({
