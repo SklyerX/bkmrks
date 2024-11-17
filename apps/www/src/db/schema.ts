@@ -98,8 +98,6 @@ export const sections = pgTable("sections", {
     onDelete: "cascade",
   }),
   name: varchar("name", { length: 50 }).notNull(),
-  order: integer("order").notNull(),
-  emoji: varchar("emoji", { length: 50 }).notNull(),
   parentId: varchar("parent_id", { length: 24 }).references(
     (): FolderReference => sections.id
   ),
@@ -117,7 +115,6 @@ export const bookmarks = pgTable("bookmarks", {
   }),
   description: varchar("description", { length: 500 }),
   favicon: text("favicon"),
-  order: integer("order").notNull(),
   folderId: varchar("folder_id", { length: 24 }).references(() => sections.id, {
     onDelete: "cascade",
   }),

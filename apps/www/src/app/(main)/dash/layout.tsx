@@ -13,6 +13,8 @@ import { CommandMenu } from "@/components/command-menu";
 import AddBookmarkModal from "./_components/add-bookmark-modal";
 import { Toaster } from "@/components/ui/sonner";
 import EditBookmarkModal from "./_components/edit-bookmark-modal";
+import CreateFolderModal from "./_components/create-folder-modal";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 
 export default async function DashboardLayout({
   children,
@@ -43,12 +45,15 @@ export default async function DashboardLayout({
           <header className="flex sticky top-0 bg-background h-16 shrink-0 items-center gap-2 px-4">
             <SidebarTrigger className="-ml-1" />
           </header>
-          <div className="flex flex-1 flex-col gap-4 p-4">{children}</div>
+          <div className="flex flex-1 flex-col gap-4 p-4">
+            <NuqsAdapter>{children}</NuqsAdapter>
+          </div>
         </SidebarInset>
       </SidebarProvider>
       <CommandMenu />
       <AddBookmarkModal />
       <EditBookmarkModal />
+      <CreateFolderModal />
       <Toaster />
     </main>
   );

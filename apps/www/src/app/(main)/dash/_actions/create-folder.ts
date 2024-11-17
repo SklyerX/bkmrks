@@ -1,26 +1,27 @@
 "use server";
 
 import { auth } from "@/auth";
-import { BookmarkEntrySchema } from "@/lib/validators/add-bookmark";
 import { actionClient } from "@/states/safe-action";
 import { db } from "@/db";
-import { bookmarks } from "@/db/schema";
+import { sections } from "@/db/schema";
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 
-export const addBookmarkAction = actionClient
-  .schema(BookmarkEntrySchema)
+const schema = z.object({
+  name: z.string(),
+  folderId: z.string().optional(),
+});
+
+export const createFolderAction = actionClient
+  .schema(schema)
   .action(async ({ parsedInput }) => {
     const session = await auth();
     if (!session || !session.user) throw new Error("Not authenticated");
 
-    await db.insert(bookmarks).values({
+    await db.insert(sections).values({
       userId: session.user.id,
       name: parsedInput.name,
-      url: parsedInput.url,
-      description: parsedInput.description,
-      isStarred: parsedInput.isStarred,
-      folderId: parsedInput.folderId || null,
-      favicon: parsedInput.favicon,
+      parentId: parsedInput.folderId || null,
     });
 
     parsedInput.folderId

@@ -1,5 +1,3 @@
-// ADD COMMAND K PLUS SHORTCUTS TO EXECUTE ACTIONS
-
 import { auth } from "@/auth";
 import { db } from "@/db";
 import { Folder } from "lucide-react";
@@ -8,6 +6,7 @@ import AddBookmark from "./_components/add-bookmark";
 import BookmarkCard from "./_components/bookmark-card";
 import { and, desc, eq, isNull } from "drizzle-orm";
 import { bookmarks as bookmarksTable } from "@/db/schema";
+import CreateFolder from "./_components/create-folder";
 
 export default async function Page() {
   const session = await auth();
@@ -37,12 +36,15 @@ export default async function Page() {
     <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 w-full">
       <div className="flex items-center justify-between">
         <h3 className="text-2xl font-semibold">Root</h3>
-        <AddBookmark />
+        <div className="flex items-center gap-2">
+          <AddBookmark />
+          <CreateFolder />
+        </div>
       </div>
       <div className="mt-5 py-5 border-y">
         {sections.map((section) => (
           <Link
-            href={`/s/${section.id}`}
+            href={`/dash/s/${section.id}`}
             key={section.id}
             className="flex items-center gap-2"
           >

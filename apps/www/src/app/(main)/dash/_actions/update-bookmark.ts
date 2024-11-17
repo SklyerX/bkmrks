@@ -25,7 +25,6 @@ export const updateBookmarkAction = actionClient
         description: parsedInput.description,
         isStarred: parsedInput.isStarred,
         favicon: parsedInput.favicon,
-        order: 0,
       })
       .where(
         and(
