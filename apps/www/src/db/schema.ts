@@ -148,3 +148,4 @@ export const bookmarkRelations = relations(bookmarks, ({ one }) => ({
 // Types
 
 export const SelectBookmark = bookmarks.$inferSelect;
+export const SelectSection = sections.$inferSelect;
