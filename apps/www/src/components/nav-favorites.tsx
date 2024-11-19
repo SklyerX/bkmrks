@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -25,6 +24,9 @@ import {
   Trash2,
 } from "lucide-react";
 import type { SelectBookmark } from "@/db/schema";
+import { toast } from "sonner";
+import { deleteBookmarkAction } from "@/app/(main)/dash/_actions/delete-bookmart";
+import { unfaviouriteBookmarkAction } from "@/app/(main)/dash/_actions/unfavorite";
 
 interface Props {
   favorites: (typeof SelectBookmark)[];
@@ -32,6 +34,30 @@ interface Props {
 
 export default function NavFavorites(props: Props) {
   const { isMobile } = useSidebar();
+
+  const handleCopy = () => {
+    toast.promise(navigator.clipboard.writeText(props.favorites[0].url), {
+      loading: "Copying link...",
+      success: "Link copied to clipboard",
+      error: "Failed to copy link",
+    });
+  };
+
+  const handleDelete = () => {
+    toast.promise(deleteBookmarkAction({ id: props.favorites[0].id }), {
+      loading: "Deleting bookmark...",
+      success: "Bookmark deleted successfully",
+      error: "Failed to delete bookmark",
+    });
+  };
+
+  const handleUnfavorite = () => {
+    toast.promise(unfaviouriteBookmarkAction({ id: props.favorites[0].id }), {
+      loading: "Unfavoriting bookmark...",
+      success: "Unfavorited bookmark successfully",
+      error: "Failed to unfavorite bookmark",
+    });
+  };
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
@@ -57,21 +83,23 @@ export default function NavFavorites(props: Props) {
                   side={isMobile ? "bottom" : "right"}
                   align={isMobile ? "end" : "start"}
                 >
-                  <DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleUnfavorite}>
                     <StarOff className="text-muted-foreground" />
                     <span>Remove from Favorites</span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleCopy}>
                     <Link className="text-muted-foreground" />
                     <span>Copy Link</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => window.open(item.url, "_blank")}
+                  >
                     <ArrowUpRight className="text-muted-foreground" />
                     <span>Open in New Tab</span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleDelete}>
                     <Trash2 className="text-muted-foreground" />
                     <span>Delete</span>
                   </DropdownMenuItem>

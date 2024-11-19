@@ -1,25 +1,14 @@
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
-  SidebarGroup,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
-import { Inbox, MoreHorizontal, Search } from "lucide-react";
+import { Inbox } from "lucide-react";
 import type { SelectBookmark } from "@/db/schema";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "./ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import type { User } from "next-auth";
 import NavFavorites from "./nav-favorites";
 import NavUser from "./nav-user";
