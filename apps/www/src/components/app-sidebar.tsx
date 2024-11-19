@@ -7,7 +7,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
-import { Inbox } from "lucide-react";
+import { Inbox, Search, Users } from "lucide-react";
 import type { SelectBookmark } from "@/db/schema";
 import type { User } from "next-auth";
 import NavFavorites from "./nav-favorites";
@@ -20,6 +20,16 @@ const data = {
       title: "All",
       url: "/dash/all",
       icon: Inbox,
+    },
+    {
+      title: "Search",
+      url: "/dash/search",
+      icon: Search,
+    },
+    {
+      title: "Shared with me",
+      url: "/dash/shares",
+      icon: Users,
     },
   ],
 };

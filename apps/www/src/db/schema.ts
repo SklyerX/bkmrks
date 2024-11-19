@@ -1,4 +1,4 @@
-import { varchar } from "drizzle-orm/pg-core";
+import { pgEnum, varchar } from "drizzle-orm/pg-core";
 import {
   boolean,
   timestamp,
@@ -104,6 +104,10 @@ export const sections = pgTable("sections", {
       onDelete: "cascade",
     }
   ),
+  subSections: varchar("id", { length: 24 })
+    .$defaultFn(() => createId())
+    .array()
+    .notNull(),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
 });
 
@@ -125,6 +129,29 @@ export const bookmarks = pgTable("bookmarks", {
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
 });
 
+export const permissionRole = pgEnum("permission_role", [
+  "OWNER",
+  "EDITOR",
+  "VIEWER",
+]);
+
+export const permissions = pgTable("permissions", {
+  id: varchar("id", { length: 24 })
+    .primaryKey()
+    .$defaultFn(() => createId()),
+  folderId: varchar("folder_id", { length: 24 })
+    .references(() => sections.id, {
+      onDelete: "cascade",
+    })
+    .notNull(),
+  userId: varchar("user_id", { length: 24 })
+    .references(() => users.id, {
+      onDelete: "cascade",
+    })
+    .notNull(),
+  role: permissionRole("role").notNull(),
+});
+
 // Combine all section relations into a single declaration with named relations
 export const sectionRelations = relations(sections, ({ one, many }) => ({
   parent: one(sections, {
@@ -136,12 +163,25 @@ export const sectionRelations = relations(sections, ({ one, many }) => ({
     relationName: "parentChild",
   }),
   bookmarks: many(bookmarks),
+  permissions: many(permissions),
 }));
 
-export const bookmarkRelations = relations(bookmarks, ({ one }) => ({
+export const bookmarkRelations = relations(bookmarks, ({ one, many }) => ({
   folder: one(sections, {
     fields: [bookmarks.folderId],
     references: [sections.id],
+  }),
+  permissions: many(permissions),
+}));
+
+export const permissionRelations = relations(permissions, ({ one }) => ({
+  section: one(sections, {
+    fields: [permissions.folderId],
+    references: [sections.id],
+  }),
+  user: one(users, {
+    fields: [permissions.userId],
+    references: [users.id],
   }),
 }));
 
