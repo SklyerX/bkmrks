@@ -10,7 +10,8 @@
     "db:push": "drizzle-kit push --config=drizzle.config.ts",
     "db:check": "drizzle-kit check --config=drizzle.config.ts",
     "db:generate": "drizzle-kit generate --config=drizzle.config.ts",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "migrate": "pnpm tsx ./src/db/migrations.ts"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.7.3",
@@ -62,9 +63,10 @@
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
-    "drizzle-kit": "^0.27.1",
+    "drizzle-kit": "^0.27.2",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
+    "tsx": "^4.19.2",
     "typescript": "^5"
   }
 }

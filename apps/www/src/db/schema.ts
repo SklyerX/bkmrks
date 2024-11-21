@@ -104,7 +104,7 @@ export const sections = pgTable("sections", {
       onDelete: "cascade",
     }
   ),
-  subSections: varchar("id", { length: 24 })
+  subSections: varchar("subSections", { length: 24 })
     .$defaultFn(() => createId())
     .array()
     .notNull(),
