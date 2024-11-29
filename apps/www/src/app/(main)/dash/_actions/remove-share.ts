@@ -5,15 +5,16 @@ import { actionClient } from "@/states/safe-action";
 import { z } from "zod";
 import { db } from "@/db";
 import { revalidatePath } from "next/cache";
-import { sections } from "@/db/schema";
+import { permissions } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
 import { FolderPermissionService } from "@/utils/folder-permission-service";
 
 const schema = z.object({
-  id: z.string(),
+  targetId: z.string(),
+  folderId: z.string(),
 });
 
-export const deleteFolderAction = actionClient
+export const removeShareAction = actionClient
   .schema(schema)
   .action(async ({ parsedInput }) => {
     const session = await auth();
@@ -21,24 +22,22 @@ export const deleteFolderAction = actionClient
 
     const folderPermissions = new FolderPermissionService();
 
-    const { isOwner } = await folderPermissions.getFolderAccess(
-      parsedInput.id,
+    const hasPermission = await folderPermissions.getFolderAccess(
+      parsedInput.folderId,
       session.user.id as string
     );
 
-    if (!isOwner)
-      throw new Error("You do not have permission to share this folder");
+    if (!hasPermission.isOwner)
+      throw new Error("You do not have permission to remove this person");
 
     await db
-      .delete(sections)
+      .delete(permissions)
       .where(
         and(
-          eq(sections.userId, session.user.id as string),
-          eq(sections.id, parsedInput.id)
+          eq(permissions.userId, parsedInput.targetId),
+          eq(permissions.folderId, parsedInput.folderId)
         )
       );
 
-    revalidatePath("/dash");
-
-    return "Folder deleted successfully!";
+    revalidatePath(`/dash/s/${parsedInput.folderId}`);
   });

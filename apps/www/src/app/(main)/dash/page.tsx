@@ -55,7 +55,7 @@ export default async function Page() {
       </div>
       <div className="mt-5 space-y-4">
         {bookmarks.map((bookmark) => (
-          <BookmarkCard bookmark={bookmark} key={bookmark.id} />
+          <BookmarkCard bookmark={bookmark} key={bookmark.id} canEdit={true} />
         ))}
       </div>
     </div>

@@ -3,18 +3,27 @@ import { and, eq, sql, inArray } from "drizzle-orm";
 import { db } from "@/db";
 import { createId } from "@paralleldrive/cuid2";
 
+interface FolderAccess {
+  canRead: boolean;
+  canWrite: boolean;
+  canDelete: boolean;
+  isOwner: boolean;
+}
+
 export class FolderPermissionService {
-  async hasPermission(
+  async getFolderAccess(
     folderId: string,
-    userId: string,
-    requiredRole: (typeof permissionRole.enumValues)[number]
-  ): Promise<boolean> {
-    // First get the folder to check its path
+    userId: string
+  ): Promise<FolderAccess> {
     const folder = await db.query.sections.findFirst({
       where: eq(sections.id, folderId),
     });
 
-    if (!folder) return false;
+    if (!folder) throw new Error("Invalid folder");
+
+    if (folder.userId === userId) {
+      return { canRead: true, canWrite: true, canDelete: true, isOwner: true };
+    }
 
     const [highestPerm] = await db
       .select()
@@ -27,22 +36,45 @@ export class FolderPermissionService {
       )
       .orderBy(
         sql`CASE role 
-        WHEN 'OWNER' THEN 3 
-        WHEN 'EDITOR' THEN 2 
-        WHEN 'VIEWER' THEN 1 
-      END DESC`
+      WHEN 'OWNER' THEN 3 
+      WHEN 'EDITOR' THEN 2 
+      WHEN 'VIEWER' THEN 1 
+    END DESC`
       )
       .limit(1);
 
-    if (!highestPerm) return false;
+    if (!highestPerm) {
+      return {
+        canRead: false,
+        canWrite: false,
+        canDelete: false,
+        isOwner: false,
+      };
+    }
 
-    const roleHierarchy = {
-      OWNER: 3,
-      EDITOR: 2,
-      VIEWER: 1,
-    };
-
-    return roleHierarchy[highestPerm.role] >= roleHierarchy[requiredRole];
+    switch (highestPerm.role) {
+      case "EDITOR":
+        return {
+          canRead: true,
+          canWrite: true,
+          canDelete: true,
+          isOwner: false,
+        };
+      case "VIEWER":
+        return {
+          canRead: true,
+          canWrite: false,
+          canDelete: false,
+          isOwner: false,
+        };
+      default:
+        return {
+          canRead: false,
+          canWrite: false,
+          canDelete: false,
+          isOwner: false,
+        };
+    }
   }
 
   async createFolder(name: string, parentId: string | null, ownerId: string) {
@@ -55,15 +87,28 @@ export class FolderPermissionService {
     const newFolderId = createId();
     const path = parent ? [...parent.subSections, newFolderId] : [newFolderId];
 
-    return await db
-      .insert(sections)
-      .values({
+    console.log(name, parentId, ownerId);
+
+    return await db.transaction(async (tx) => {
+      const [section] = await tx
+        .insert(sections)
+        .values({
+          id: newFolderId,
+          userId: ownerId,
+          name,
+          parentId: parentId,
+          subSections: path,
+        })
+        .returning();
+
+      await tx.insert(permissions).values({
         userId: ownerId,
-        name,
-        parentId: parentId,
-        subSections: path,
-      })
-      .returning();
+        folderId: newFolderId,
+        role: "OWNER",
+      });
+
+      return section;
+    });
   }
 
   async getSharedFolders(userId: string) {
@@ -97,40 +142,34 @@ export class FolderPermissionService {
 
     if (!user) throw new Error("No user found");
 
-    if (user.id === targetUser) throw new Error("Cannot share with yourself");
-
-    await db.transaction(async (tx) => {
-      await tx
-        .insert(permissions)
-        .values({
-          userId: targetUser,
-          folderId,
-          role: accessRole,
-        })
-        .onConflictDoUpdate({
-          target: [permissions.userId, permissions.folderId],
-          set: {
-            role: accessRole,
-          },
-        });
-
-      for (const folderPathId of folder.subSections) {
-        if (folderPathId === folderId) continue;
-
-        await tx
-          .insert(permissions)
-          .values({
-            userId: targetUser,
-            folderId: folderPathId,
-            role: accessRole,
-          })
-          .onConflictDoUpdate({
-            target: [permissions.userId, permissions.folderId],
-            set: {
-              role: accessRole,
-            },
-          });
-      }
+    const existingPermissions = await db.query.permissions.findMany({
+      where: and(
+        eq(permissions.userId, targetUser),
+        inArray(permissions.folderId, folder.subSections)
+      ),
     });
+
+    // If permissions exist, update them
+    if (existingPermissions.length > 0) {
+      await db
+        .update(permissions)
+        .set({ role: accessRole })
+        .where(
+          and(
+            eq(permissions.userId, targetUser),
+            inArray(permissions.folderId, folder.subSections)
+          )
+        );
+      return;
+    }
+
+    // If no permissions exist, insert new ones
+    const permissionsToInsert = folder.subSections.map((sectionId) => ({
+      userId: targetUser,
+      folderId: sectionId,
+      role: accessRole,
+    }));
+
+    await db.insert(permissions).values(permissionsToInsert);
   }
 }

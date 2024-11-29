@@ -1,4 +1,4 @@
-import { pgEnum, varchar } from "drizzle-orm/pg-core";
+import { pgEnum, unique, varchar } from "drizzle-orm/pg-core";
 import {
   boolean,
   timestamp,
@@ -91,20 +91,20 @@ export const authenticators = pgTable(
 type FolderReference = { id: string };
 
 export const sections = pgTable("sections", {
-  id: varchar("id", { length: 24 })
+  id: varchar("id", { length: 40 })
     .primaryKey()
     .$defaultFn(() => createId()),
   userId: text("user_id").references(() => users.id, {
     onDelete: "cascade",
   }),
   name: varchar("name", { length: 50 }).notNull(),
-  parentId: varchar("parent_id", { length: 24 }).references(
+  parentId: varchar("parent_id", { length: 40 }).references(
     (): FolderReference => sections.id,
     {
       onDelete: "cascade",
     }
   ),
-  subSections: varchar("subSections", { length: 24 })
+  subSections: varchar("subSections", { length: 40 })
     .$defaultFn(() => createId())
     .array()
     .notNull(),
@@ -112,7 +112,7 @@ export const sections = pgTable("sections", {
 });
 
 export const bookmarks = pgTable("bookmarks", {
-  id: varchar("id", { length: 24 })
+  id: varchar("id", { length: 40 })
     .primaryKey()
     .$defaultFn(() => createId()),
   name: varchar("name", { length: 150 }).notNull(),
@@ -122,7 +122,7 @@ export const bookmarks = pgTable("bookmarks", {
   }),
   description: varchar("description", { length: 500 }),
   favicon: text("favicon"),
-  folderId: varchar("folder_id", { length: 24 }).references(() => sections.id, {
+  folderId: varchar("folder_id", { length: 40 }).references(() => sections.id, {
     onDelete: "cascade",
   }),
   isStarred: boolean("is_starred").notNull().default(false),
@@ -135,22 +135,28 @@ export const permissionRole = pgEnum("permission_role", [
   "VIEWER",
 ]);
 
-export const permissions = pgTable("permissions", {
-  id: varchar("id", { length: 24 })
-    .primaryKey()
-    .$defaultFn(() => createId()),
-  folderId: varchar("folder_id", { length: 24 })
-    .references(() => sections.id, {
-      onDelete: "cascade",
-    })
-    .notNull(),
-  userId: varchar("user_id", { length: 24 })
-    .references(() => users.id, {
-      onDelete: "cascade",
-    })
-    .notNull(),
-  role: permissionRole("role").notNull(),
-});
+export const permissions = pgTable(
+  "permissions",
+  {
+    id: varchar("id", { length: 40 })
+      .primaryKey()
+      .$defaultFn(() => createId()),
+    folderId: varchar("folder_id", { length: 40 })
+      .references(() => sections.id, {
+        onDelete: "cascade",
+      })
+      .notNull(),
+    userId: varchar("user_id", { length: 40 })
+      .references(() => users.id, {
+        onDelete: "cascade",
+      })
+      .notNull(),
+    role: permissionRole("role").notNull(),
+  },
+  (table) => ({
+    unq: unique().on(table.userId, table.folderId),
+  })
+);
 
 // Combine all section relations into a single declaration with named relations
 export const sectionRelations = relations(sections, ({ one, many }) => ({
@@ -166,12 +172,11 @@ export const sectionRelations = relations(sections, ({ one, many }) => ({
   permissions: many(permissions),
 }));
 
-export const bookmarkRelations = relations(bookmarks, ({ one, many }) => ({
+export const bookmarkRelations = relations(bookmarks, ({ one }) => ({
   folder: one(sections, {
     fields: [bookmarks.folderId],
     references: [sections.id],
   }),
-  permissions: many(permissions),
 }));
 
 export const permissionRelations = relations(permissions, ({ one }) => ({

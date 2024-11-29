@@ -7,6 +7,7 @@ import { sections } from "@/db/schema";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { and, eq } from "drizzle-orm";
+import { FolderPermissionService } from "@/utils/folder-permission-service";
 
 export const renameFolderAction = actionClient
   .schema(
@@ -18,6 +19,18 @@ export const renameFolderAction = actionClient
   .action(async ({ parsedInput }) => {
     const session = await auth();
     if (!session || !session.user) throw new Error("Not authenticated");
+
+    const folderPermissions = new FolderPermissionService();
+
+    if (parsedInput.id) {
+      const { canWrite } = await folderPermissions.getFolderAccess(
+        parsedInput.id,
+        session.user.id as string
+      );
+
+      if (!canWrite)
+        throw new Error("You do not have permission to share this folder");
+    }
 
     await db
       .update(sections)

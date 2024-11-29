@@ -43,6 +43,20 @@
       "when": 1732031829774,
       "tag": "0005_lonely_toxin",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1732203196427,
+      "tag": "0006_mean_jubilee",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1732818947475,
+      "tag": "0007_chilly_phil_sheldon",
+      "breakpoints": true
     }
   ]
 }

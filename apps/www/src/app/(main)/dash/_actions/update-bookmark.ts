@@ -8,12 +8,25 @@ import { bookmarks } from "@/db/schema";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { and, eq } from "drizzle-orm";
+import { FolderPermissionService } from "@/utils/folder-permission-service";
 
 export const updateBookmarkAction = actionClient
   .schema(BookmarkEntrySchema.extend({ id: z.string() }))
   .action(async ({ parsedInput }) => {
     const session = await auth();
     if (!session || !session.user) throw new Error("Not authenticated");
+
+    const folderPermissions = new FolderPermissionService();
+
+    if (parsedInput.folderId) {
+      const { canWrite } = await folderPermissions.getFolderAccess(
+        parsedInput.folderId,
+        session.user.id as string
+      );
+
+      if (!canWrite)
+        throw new Error("You do not have permission to share this folder");
+    }
 
     await db
       .update(bookmarks)

@@ -4,6 +4,7 @@ import BookmarkDropdown from "./bookmark-dropdown";
 
 interface Props {
   bookmark: typeof SelectBookmark;
+  canEdit: boolean;
 }
 
 const truncateText = (text: string | null | undefined, maxLength: number) => {
@@ -12,7 +13,7 @@ const truncateText = (text: string | null | undefined, maxLength: number) => {
   return `${text.slice(0, maxLength)}...`;
 };
 
-export default function BookmarkCard({ bookmark }: Props) {
+export default function BookmarkCard({ bookmark, canEdit }: Props) {
   const TITLE_MAX_LENGTH = 50;
   const DESCRIPTION_MAX_LENGTH = 103;
 
@@ -39,7 +40,7 @@ export default function BookmarkCard({ bookmark }: Props) {
       <div className="w-full">
         <div className="flex items-center justify-between">
           <h3 className="text-xl font-semibold">{title}</h3>
-          <BookmarkDropdown bookmark={bookmark} />
+          {canEdit && <BookmarkDropdown bookmark={bookmark} />}
         </div>
         <p className="text-sm text-muted-foreground">{getDescription()}</p>
       </div>

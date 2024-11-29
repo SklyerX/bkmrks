@@ -3,47 +3,45 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { db } from "@/db";
 import { bookmarks as bookmarksTable } from "@/db/schema";
-import { and, desc, eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { Folder } from "lucide-react";
 import BookmarkCard from "../../_components/bookmark-card";
 import { redirect } from "next/navigation";
 import CreateFolder from "../../_components/create-folder";
 import GoBack from "@/components/go-back";
 import { SettingsDialog } from "@/components/settings-dialog";
+import { FolderPermissionService } from "@/utils/folder-permission-service";
 
 interface Props {
   params: {
     sectionId: string;
   };
 }
-
 export default async function Page(props: Props) {
   const session = await auth();
+  if (!session?.user?.id) return redirect("/login");
+
+  const folderPermissions = new FolderPermissionService();
+
+  const userId = session.user.id;
+  const folderId = props.params.sectionId;
+
+  const access = await folderPermissions.getFolderAccess(folderId, userId);
+  if (!access.canRead) return redirect("/dash");
 
   const [currentSection, bookmarks, sections] = await Promise.all([
     db.query.sections.findFirst({
-      where: (fields, { eq, and }) =>
-        and(
-          eq(fields.id, props.params.sectionId),
-          eq(fields.userId, session?.user?.id as string)
-        ),
+      where: (fields, { eq }) => eq(fields.id, folderId),
     }),
-    await db
+
+    db
       .select()
       .from(bookmarksTable)
-      .where(
-        and(
-          eq(bookmarksTable.folderId, props.params.sectionId),
-          eq(bookmarksTable.userId, session?.user?.id as string)
-        )
-      )
+      .where(eq(bookmarksTable.folderId, folderId))
       .orderBy(desc(bookmarksTable.createdAt)),
+
     db.query.sections.findMany({
-      where: (fields, { eq, and }) =>
-        and(
-          eq(fields.parentId, props.params.sectionId),
-          eq(fields.userId, session?.user?.id as string)
-        ),
+      where: (fields, { eq }) => eq(fields.parentId, folderId),
       orderBy: (fields, { desc }) => desc(fields.id),
     }),
   ]);
@@ -55,12 +53,23 @@ export default async function Page(props: Props) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <GoBack />
-          <h3 className="text-2xl font-semibold">{currentSection?.name}</h3>
+          <h3 className="text-2xl font-semibold">
+            {currentSection.name}
+            {currentSection.userId !== userId && (
+              <span className="ml-2 text-sm text-muted-foreground">
+                (Shared)
+              </span>
+            )}
+          </h3>
         </div>
         <div className="flex items-center gap-2">
-          <AddBookmark />
-          <CreateFolder />
-          <SettingsDialog />
+          {access.canWrite && (
+            <>
+              <AddBookmark />
+              <CreateFolder />
+            </>
+          )}
+          {access.isOwner && <SettingsDialog />}
         </div>
       </div>
       <div className="mt-5 py-5 border-y">
@@ -77,7 +86,11 @@ export default async function Page(props: Props) {
       </div>
       <div className="mt-5 space-y-4">
         {bookmarks.map((bookmark) => (
-          <BookmarkCard bookmark={bookmark} key={bookmark.id} />
+          <BookmarkCard
+            bookmark={bookmark}
+            key={bookmark.id}
+            canEdit={access.canWrite}
+          />
         ))}
       </div>
     </div>
