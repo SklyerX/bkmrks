@@ -71,7 +71,11 @@ export default function ShareSettings() {
       removeShareAction({ targetId, folderId: folderId as string }),
       {
         loading: "Removing...",
-        success: "Removed successfully!",
+        success: () => {
+          window.location.reload();
+
+          return "Removed successfully!";
+        },
         error: "Failed to remove",
       }
     );
@@ -80,6 +84,7 @@ export default function ShareSettings() {
   useEffect(() => {
     if (status === "hasSucceeded") {
       toast.success("Invitation sent!");
+      window.location.reload();
     }
     if (status === "hasErrored") {
       toast.error("Invitation failed!", {

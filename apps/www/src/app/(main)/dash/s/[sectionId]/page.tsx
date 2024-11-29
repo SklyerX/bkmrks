@@ -10,7 +10,10 @@ import { redirect } from "next/navigation";
 import CreateFolder from "../../_components/create-folder";
 import GoBack from "@/components/go-back";
 import { SettingsDialog } from "@/components/settings-dialog";
-import { FolderPermissionService } from "@/utils/folder-permission-service";
+import {
+  type FolderAccess,
+  FolderPermissionService,
+} from "@/utils/folder-permission-service";
 
 interface Props {
   params: {
@@ -26,7 +29,18 @@ export default async function Page(props: Props) {
   const userId = session.user.id;
   const folderId = props.params.sectionId;
 
-  const access = await folderPermissions.getFolderAccess(folderId, userId);
+  let access: FolderAccess;
+
+  try {
+    console.log("Getting access for folder:", folderId);
+    access = await folderPermissions.getFolderAccess(folderId, userId);
+  } catch (err) {
+    console.error(err);
+    return redirect("/dash");
+  }
+
+  console.log("Access:", access);
+
   if (!access.canRead) return redirect("/dash");
 
   const [currentSection, bookmarks, sections] = await Promise.all([

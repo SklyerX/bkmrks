@@ -3,7 +3,7 @@ import { and, eq, sql, inArray } from "drizzle-orm";
 import { db } from "@/db";
 import { createId } from "@paralleldrive/cuid2";
 
-interface FolderAccess {
+export interface FolderAccess {
   canRead: boolean;
   canWrite: boolean;
   canDelete: boolean;
@@ -15,9 +15,14 @@ export class FolderPermissionService {
     folderId: string,
     userId: string
   ): Promise<FolderAccess> {
+    console.log("Debug - Input folderID:", folderId);
+    console.log("Debug - Input folderID type:", typeof folderId);
+
     const folder = await db.query.sections.findFirst({
-      where: eq(sections.id, folderId),
+      where: (fields, { eq }) => eq(fields.id, folderId),
     });
+
+    console.log("Debug - Query result:", folder);
 
     if (!folder) throw new Error("Invalid folder");
 
@@ -36,12 +41,14 @@ export class FolderPermissionService {
       )
       .orderBy(
         sql`CASE role 
-      WHEN 'OWNER' THEN 3 
-      WHEN 'EDITOR' THEN 2 
-      WHEN 'VIEWER' THEN 1 
-    END DESC`
+    WHEN 'OWNER' THEN 3 
+    WHEN 'EDITOR' THEN 2 
+    WHEN 'VIEWER' THEN 1 
+  END DESC`
       )
       .limit(1);
+
+    console.log("Debug - Highest permission:", highestPerm);
 
     if (!highestPerm) {
       return {

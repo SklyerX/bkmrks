@@ -26,7 +26,7 @@ export default async function DashboardLayout({
   if (!session || !session?.user) return redirect("/login");
 
   const favorites = await db.query.bookmarks.findMany({
-    where: (fields, { eq, and, isNull }) =>
+    where: (fields, { eq, and }) =>
       and(
         eq(fields.isStarred, true),
         eq(fields.userId, session?.user?.id as string)

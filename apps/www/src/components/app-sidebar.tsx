@@ -7,15 +7,21 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
-import { Inbox, Search, Users } from "lucide-react";
+import { Home, Inbox, Search, Users } from "lucide-react";
 import type { SelectBookmark } from "@/db/schema";
 import type { User } from "next-auth";
 import NavFavorites from "./nav-favorites";
 import NavUser from "./nav-user";
+import Link from "next/link";
 
 // This is sample data.
 const data = {
   navMain: [
+    {
+      title: "Home",
+      url: "/dash",
+      icon: Home,
+    },
     {
       title: "All",
       url: "/dash/all",
@@ -48,10 +54,10 @@ export function AppSidebar({ user, favorites, ...props }: Props) {
             {data.navMain.map((item) => (
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton asChild>
-                  <a href={item.url}>
+                  <Link href={item.url}>
                     <item.icon />
                     <span>{item.title}</span>
-                  </a>
+                  </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             ))}

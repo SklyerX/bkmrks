@@ -48,7 +48,7 @@ export const inviteUserAction = actionClient
 
     const { isOwner } = await folderPermissions.getFolderAccess(
       parsedInput.folderId,
-      targetUser.id
+      session.user.id as string
     );
 
     if (!isOwner)
