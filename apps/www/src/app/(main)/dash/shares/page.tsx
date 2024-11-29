@@ -67,9 +67,6 @@ export default async function Page() {
             </div>
           );
         })}
-        <pre>
-          <code>{JSON.stringify(shares, null, 2)}</code>
-        </pre>
       </div>
     </div>
   );
