@@ -10,28 +10,10 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { Search, Link, FolderPlus, Settings, FolderCog } from "lucide-react";
+import { Link, FolderPlus, Settings, FolderCog } from "lucide-react";
 import { useCreateFolder } from "@/states/create-folder";
 import { useAddBookmark } from "@/states/add-bookmark";
 import { redirect, useParams } from "next/navigation";
-import { useDebounce } from "@/hooks/use-debounce";
-import { searchContentAction } from "@/app/(main)/dash/_actions/search-content";
-import type { SelectBookmark, SelectSection } from "@/db/schema";
-
-interface SearchResult {
-  bookmarks: (typeof SelectBookmark)[];
-  sections: (typeof SelectSection)[];
-}
-
-type SearchItem =
-  | {
-      type: "section";
-      data: typeof SelectSection;
-    }
-  | {
-      type: "bookmark";
-      data: typeof SelectBookmark;
-    };
 
 export const CommandMenu = () => {
   const [open, setOpen] = useState(false);

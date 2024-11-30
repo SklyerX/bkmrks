@@ -2,33 +2,88 @@
 
 import { auth } from "@/auth";
 import { actionClient } from "@/states/safe-action";
-import { db } from "@/db";
 import { z } from "zod";
+import { db } from "@/db";
+import { bookmarks, sections } from "@/db/schema";
+import { and, eq, ilike, or, desc } from "drizzle-orm";
+
+const schema = z.object({
+  query: z.string(),
+  searchType: z.enum(["bookmarks", "folders", "all"]),
+});
 
 export const searchContentAction = actionClient
-  .schema(z.object({ query: z.string() }))
-  .action(async ({ parsedInput }) => {
+  .schema(schema)
+  .action(async ({ parsedInput: { query, searchType } }) => {
     const session = await auth();
     if (!session || !session.user) throw new Error("Not authenticated");
 
-    const sections = await db.query.sections.findMany({
-      where: (fields, { and, ilike, eq }) =>
+    const userId = session.user.id as string;
+
+    if (searchType === "folders") {
+      const sectionResults = await db
+        .select()
+        .from(sections)
+        .where(
+          and(eq(sections.userId, userId), ilike(sections.name, `%${query}%`))
+        )
+        .orderBy(desc(sections.createdAt))
+        .limit(50);
+
+      return {
+        sections: sectionResults,
+        bookmarks: [],
+      };
+    }
+
+    if (searchType === "bookmarks") {
+      const bookmarkResults = await db
+        .select()
+        .from(bookmarks)
+        .where(
+          and(
+            eq(bookmarks.userId, userId),
+            or(
+              ilike(bookmarks.name, `%${query}%`),
+              ilike(bookmarks.url, `%${query}%`)
+            )
+          )
+        )
+        .orderBy(desc(bookmarks.createdAt))
+        .limit(50);
+
+      return {
+        sections: [],
+        bookmarks: bookmarkResults,
+      };
+    }
+
+    const sectionResults = await db
+      .select()
+      .from(sections)
+      .where(
+        and(eq(sections.userId, userId), ilike(sections.name, `%${query}%`))
+      )
+      .orderBy(desc(sections.createdAt))
+      .limit(25);
+
+    const bookmarkResults = await db
+      .select()
+      .from(bookmarks)
+      .where(
         and(
-          eq(fields.userId, session.user?.id as string),
-          ilike(fields.name, `%${parsedInput.query}%`)
-        ),
-    });
+          eq(bookmarks.userId, userId),
+          or(
+            ilike(bookmarks.name, `%${query}%`),
+            ilike(bookmarks.url, `%${query}%`)
+          )
+        )
+      )
+      .orderBy(desc(bookmarks.createdAt))
+      .limit(25);
 
-    const bookmarks = await db.query.bookmarks.findMany({
-      where: (fields, { and, eq, ilike }) =>
-        and(
-          eq(fields.userId, session.user?.id as string),
-          ilike(fields.name, `%${parsedInput.query}%`)
-        ),
-    });
-
-    console.log("Bookmarks:", bookmarks);
-    console.log("Sections:", sections);
-
-    return { sections, bookmarks };
+    return {
+      sections: sectionResults,
+      bookmarks: bookmarkResults,
+    };
   });
