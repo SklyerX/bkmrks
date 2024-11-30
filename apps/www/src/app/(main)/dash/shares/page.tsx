@@ -35,7 +35,7 @@ export default async function Page() {
   });
 
   return (
-    <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 w-full">
+    <div>
       <h3 className="text-2xl font-semibold">Shared with me</h3>
       <div className="mt-5">
         {shares.map((share) => {

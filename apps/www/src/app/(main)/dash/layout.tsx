@@ -45,7 +45,7 @@ export default async function DashboardLayout({
           <header className="flex sticky top-0 bg-background h-16 shrink-0 items-center gap-2 px-4">
             <SidebarTrigger className="-ml-1" />
           </header>
-          <div className="flex flex-1 flex-col gap-4 p-4">
+          <div className="flex flex-1 flex-col gap-4 p-4 mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 w-full">
             <NuqsAdapter>{children}</NuqsAdapter>
           </div>
         </SidebarInset>
