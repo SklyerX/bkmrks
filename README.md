@@ -2,6 +2,8 @@
 
 A modern web application for saving bookmarks. Built with Next.js, featuring secure authentication and sharing capabilities.
 
+![app image](./screenshots/app.png "Bkmrks")
+
 ## Architecture
 
 This project uses a monorepo structure to support scalability and future extensions:
