@@ -16,6 +16,7 @@ import {
 import { MoreHorizontal } from "lucide-react";
 import type { User } from "next-auth";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import LogoutButton from "./logout-button";
 
 interface Props {
   user: User;
@@ -63,10 +64,7 @@ export default function NavUser(props: Props) {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>Profile</DropdownMenuItem>
-                <DropdownMenuItem>Settings</DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem>Log out</DropdownMenuItem>
+                <LogoutButton />
               </DropdownMenuContent>
             </DropdownMenu>
           </SidebarMenuItem>
