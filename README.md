@@ -24,6 +24,12 @@ This project uses a monorepo structure to support scalability and future extensi
 - **Tailwind CSS**: A utility-first CSS framework
 - **Zustand**: A state management library for React
 
+### Git flow
+
+This project was built using a git flow structure. This means we create an optimal flow of where data gets pushed and stored to until the final moment in which we are ready to commit to the main branch (the production branch). This will ensure that the data is always up-to-date and ready to be used.
+
+If you want to use git flow you can either set it up manually or use the [git flow cli](https://skoch.github.io/Git-Workflow/)
+
 ### Core Features
 
 - Secure authentication flow
