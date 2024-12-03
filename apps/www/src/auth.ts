@@ -34,7 +34,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     strategy: "database",
   },
   pages: {
-    newUser: "/onboarding",
+    newUser: "/dash", // /onboarding doesn't make sense without the extension
     signIn: "/login",
     verifyRequest: "/verify-request",
   },
